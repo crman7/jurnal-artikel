@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AAPL Stock: Apple Inc. - Stock Market Analysis Dashboard</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .font-mono-num { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen">
+
+  <!-- Top Global Navbar -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-6">
+        <a href="#" class="flex items-center gap-2 font-black text-lg text-slate-900 tracking-tight">
+          <span class="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold">SA</span>
+          <span>Stock<span class="text-blue-600">Analysis</span></span>
+        </a>
+        <!-- Ticker Quick Search Bar -->
+        <div class="relative hidden sm:block w-72">
+          <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </span>
+          <input type="text" placeholder="Search ticker or company (e.g. AAPL, NVDA, BBCA)..." value="AAPL" 
+            class="w-full bg-slate-100 border border-slate-200 text-xs rounded-lg pl-9 pr-3 py-1.5 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs font-medium text-slate-600">
+        <span class="hidden md:inline-flex items-center gap-1.5 text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Market Open
+        </span>
+        <button class="hover:text-slate-900">Watchlist</button>
+        <button class="hover:text-slate-900">Screener</button>
+        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs">US</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stock Header & Custom Screenshot Navigation Section -->
+  <section class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2">
+
+      <!-- Breadcrumbs & Action Buttons (Persis Gambar) -->
+      <div class="flex flex-wrap items-center justify-between gap-3 text-xs mb-3">
+        <div class="flex items-center gap-1.5 text-slate-600 font-medium">
+          <a href="#" class="hover:text-blue-600">Stocks</a>
+          <span>/</span>
+          <a href="#" class="hover:text-blue-600">AAPL Stock</a>
+          <span>/</span>
+          <div class="relative inline-block cursor-pointer group">
+            <span class="text-slate-900 font-semibold inline-flex items-center gap-1 hover:text-blue-600">
+              Summary <span class="text-[9px]">▼</span>
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Button Compare -->
+          <button class="inline-flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-full border border-slate-200 text-xs transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Compare
+          </button>
+          <!-- Button Following -->
+          <button id="followBtn" onclick="toggleFollow()" class="inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-full text-xs shadow-sm transition">
+            Following
+          </button>
+        </div>
+      </div>
+
+      <!-- Company Title & Realtime Stock Price -->
+      <div class="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Apple Inc.</h1>
+            <span class="text-sm font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md font-mono-num">NASDAQ: AAPL</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Technology &bull; Consumer Electronics &bull; United States</p>
+        </div>
+
+        <div class="flex items-baseline gap-3">
+          <div class="text-3xl font-black text-slate-900 font-mono-num" id="currentPrice">$237.40</div>
+          <div class="flex items-center text-sm font-bold text-emerald-600 font-mono-num">
+            <span>+$3.85 (+1.65%)</span>
+            <svg class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+          </div>
+          <span class="text-xs text-slate-400">At close: 4:00 PM EST</span>
+        </div>
+      </div>
+
+      <!-- TABS BAR (PERSIS SEPERTI GAMBAR CONTOH) -->
+      <div class="overflow-x-auto scrollbar-none border-b border-slate-200 -mb-[1px]">
+        <nav class="flex space-x-1 sm:space-x-3 text-xs font-semibold whitespace-nowrap" id="tabNav">
+
+          <!-- 1. Overview (Active) -->
+          <button onclick="switchTab('overview')" data-tab="overview" class="tab-btn active-tab flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-blue-600 text-blue-600 bg-blue-50/50 rounded-t-lg transition">
+            <!-- Home Icon -->
+            <svg class="w-5 h-5 mb-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/></svg>
+            <span>Overview</span>
+          </button>
+
+          <!-- 2. Bulls/Bears -->
+          <button onclick="switchTab('bulls-bears')" data-tab="bulls-bears" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Scales Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
+            <span>Bulls/Bears</span>
+          </button>
+
+          <!-- 3. Charts -->
+          <button onclick="switchTab('charts')" data-tab="charts" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Line Chart Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+            <span>Charts</span>
+          </button>
+
+          <!-- 4. Performance -->
+          <button onclick="switchTab('performance')" data-tab="performance" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Trophy Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            <span>Performance</span>
+          </button>
+
+          <!-- 5. News -->
+          <button onclick="switchTab('news')" data-tab="news" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Newspaper Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/></svg>
+            <span>News</span>
+          </button>
+
+          <!-- 6. Dividends -->
+          <button onclick="switchTab('dividends')" data-tab="dividends" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Money Bag Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>Dividends</span>
+          </button>
+
+          <!-- 7. Financials -->
+          <button onclick="switchTab('financials')" data-tab="financials" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Document with dollar Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>Financials</span>
+          </button>
+
+          <!-- 8. Metrics -->
+          <button onclick="switchTab('metrics')" data-tab="metrics" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Stats / Bar Chart Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span>Metrics</span>
+          </button>
+
+          <!-- 9. DCF (Discounted Cash Flow) -->
+          <button onclick="switchTab('dcf')" data-tab="dcf" class="tab-btn flex flex-col items-center justify-center py-2.5 px-3.5 border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-t-lg transition">
+            <!-- Calculator Icon -->
+            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <span>DCF</span>
+          </button>
+
+        </nav>
+      </div>
+
+      <!-- POPULAR QUICK LINKS SUB-NAV (PERSIS GAMBAR CONTOH) -->
+      <div class="py-2.5 text-xs text-slate-600 flex flex-wrap items-center gap-1.5 font-medium">
+        <span class="font-bold text-slate-900 border-b border-dotted border-slate-600">popular:</span>
+        <a href="#stats-table" onclick="highlightMetric('mkt-cap')" class="text-blue-600 hover:underline">market cap</a>
+        <span class="text-slate-300">|</span>
+        <a href="#stats-table" onclick="highlightMetric('pe-ratio')" class="text-blue-600 hover:underline">pe ratio</a>
+        <span class="text-slate-300">|</span>
+        <a href="#stats-table" onclick="highlightMetric('revenue')" class="text-blue-600 hover:underline">revenue</a>
+        <span class="text-slate-300">|</span>
+        <a href="#stats-table" onclick="highlightMetric('profit')" class="text-blue-600 hover:underline">profit</a>
+        <span class="text-slate-300">|</span>
+        <a href="#chart-section" class="text-blue-600 hover:underline">price history</a>
+        <span class="text-slate-300">|</span>
+        <a href="#performance-section" onclick="switchTab('performance')" class="text-blue-600 hover:underline">total return</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MAIN TAB CONTENT CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- ================= TAB 1: OVERVIEW ================= -->
+    <div id="tab-overview" class="tab-content space-y-6">
+      
+      <!-- Chart & Primary Statistics Row -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Main Price Chart (2 Cols) -->
+        <div id="chart-section" class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-slate-900">AAPL Stock Price History</h2>
+              <p class="text-xs text-slate-500">Real-time dynamic price tracking (USD)</p>
+            </div>
+            <!-- Time Interval Selector -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs font-semibold">
+              <button onclick="changeInterval('1D')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">1D</button>
+              <button onclick="changeInterval('5D')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">5D</button>
+              <button onclick="changeInterval('1M')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">1M</button>
+              <button onclick="changeInterval('6M')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">6M</button>
+              <button onclick="changeInterval('YTD')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">YTD</button>
+              <button onclick="changeInterval('1Y')" class="interval-btn active-interval px-2.5 py-1 rounded bg-white text-blue-600 shadow-xs font-bold">1Y</button>
+              <button onclick="changeInterval('ALL')" class="interval-btn px-2.5 py-1 rounded hover:bg-white text-slate-600">ALL</button>
+            </div>
+          </div>
+
+          <div class="h-72 w-full">
+            <canvas id="stockPriceChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Analyst Ratings & Price Targets -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs flex flex-col justify-between">
+          <div>
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="text-sm font-bold text-slate-900">Wall St. Analyst Ratings</h3>
+              <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">Moderate Buy</span>
+            </div>
+
+            <p class="text-xs text-slate-500 mb-4">Consensus based on 38 Wall Street Wall analysts covering AAPL stock.</p>
+
+            <!-- Consensus Bar -->
+            <div class="space-y-2 mb-6">
+              <div class="flex justify-between text-xs font-semibold">
+                <span class="text-emerald-600">Buy: 28</span>
+                <span class="text-amber-600">Hold: 8</span>
+                <span class="text-rose-600">Sell: 2</span>
+              </div>
+              <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex">
+                <div style="width: 73.6%" class="bg-emerald-500" title="Buy (73.6%)"></div>
+                <div style="width: 21.1%" class="bg-amber-400" title="Hold (21.1%)"></div>
+                <div style="width: 5.3%" class="bg-rose-500" title="Sell (5.3%)"></div>
+              </div>
+            </div>
+
+            <!-- Price Target Bar -->
+            <div class="bg-slate-50 rounded-xl p-3 border border-slate-200/80 space-y-2 text-xs">
+              <div class="flex justify-between text-slate-500">
+                <span>Avg Target:</span>
+                <span class="font-bold text-slate-900 font-mono-num">$254.20 (+7.1%)</span>
+              </div>
+              <div class="flex justify-between text-slate-500">
+                <span>Highest Target:</span>
+                <span class="font-bold text-emerald-600 font-mono-num">$300.00 (+26.4%)</span>
+              </div>
+              <div class="flex justify-between text-slate-500">
+                <span>Lowest Target:</span>
+                <span class="font-bold text-rose-600 font-mono-num">$186.00 (-21.6%)</span>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="switchTab('bulls-bears')" class="w-full mt-4 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 py-2 rounded-lg text-center transition">
+            Lihat Analisis Bulls vs Bears &rarr;
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Key Statistics Table Grid (Popular Items Highlighted) -->
+      <div id="stats-table" class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
+        <div class="p-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Apple Inc. Key Financial Statistics</h3>
+          <span class="text-[11px] text-slate-500">TTM (Trailing Twelve Months)</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-slate-100 text-xs">
+          
+          <!-- Column 1 -->
+          <div class="p-4 space-y-3">
+            <div id="metric-mkt-cap" class="flex justify-between items-center py-1 rounded transition duration-500">
+              <span class="text-slate-500">Market Cap:</span>
+              <span class="font-bold text-slate-900 font-mono-num">$3.62 Trillion</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Enterprise Value (EV):</span>
+              <span class="font-bold text-slate-900 font-mono-num">$3.68 Trillion</span>
+            </div>
+            <div id="metric-pe-ratio" class="flex justify-between items-center py-1 rounded transition duration-500">
+              <span class="text-slate-500">PE Ratio (TTM):</span>
+              <span class="font-bold text-slate-900 font-mono-num">35.12</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Forward PE:</span>
+              <span class="font-bold text-slate-900 font-mono-num">29.85</span>
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div class="p-4 space-y-3">
+            <div id="metric-revenue" class="flex justify-between items-center py-1 rounded transition duration-500">
+              <span class="text-slate-500">Revenue (TTM):</span>
+              <span class="font-bold text-slate-900 font-mono-num">$391.04 Billion</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Gross Margin:</span>
+              <span class="font-bold text-slate-900 font-mono-num">46.21%</span>
+            </div>
+            <div id="metric-profit" class="flex justify-between items-center py-1 rounded transition duration-500">
+              <span class="text-slate-500">Net Profit (TTM):</span>
+              <span class="font-bold text-emerald-600 font-mono-num">$93.74 Billion</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">EPS Diluted:</span>
+              <span class="font-bold text-slate-900 font-mono-num">$6.08</span>
+            </div>
+          </div>
+
+          <!-- Column 3 -->
+          <div class="p-4 space-y-3">
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Dividend & Yield:</span>
+              <span class="font-bold text-slate-900 font-mono-num">$1.00 (0.42%)</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Payout Ratio:</span>
+              <span class="font-bold text-slate-900 font-mono-num">16.45%</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">52-Week Range:</span>
+              <span class="font-bold text-slate-900 font-mono-num">$164.08 - $245.37</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Beta (5Y):</span>
+              <span class="font-bold text-slate-900 font-mono-num">1.24</span>
+            </div>
+          </div>
+
+          <!-- Column 4 -->
+          <div class="p-4 space-y-3">
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">ROE (Return on Equity):</span>
+              <span class="font-bold text-indigo-600 font-mono-num">147.25%</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">ROA (Return on Assets):</span>
+              <span class="font-bold text-slate-900 font-mono-num">28.40%</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Free Cash Flow:</span>
+              <span class="font-bold text-cyan-600 font-mono-num">$108.81 Billion</span>
+            </div>
+            <div class="flex justify-between items-center py-1">
+              <span class="text-slate-500">Shares Outstanding:</span>
+              <span class="font-bold text-slate-900 font-mono-num">15.20 Billion</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- About Company Summary -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs text-xs space-y-2">
+        <h3 class="font-bold text-slate-900 text-sm">About Apple Inc.</h3>
+        <p class="text-slate-600 leading-relaxed">
+          Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories, and sells a variety of related services. The company's products include iPhone, Mac, iPad, and Wearables, Home, and Accessories (Apple Watch, AirPods, Apple TV). Services include the App Store, Apple Music, Apple Pay, iCloud, and AppleCare.
+        </p>
+        <div class="pt-2 flex flex-wrap gap-4 text-slate-500">
+          <span><strong>CEO:</strong> Tim Cook</span>
+          <span>&bull;</span>
+          <span><strong>Employees:</strong> 161,000</span>
+          <span>&bull;</span>
+          <span><strong>Headquarters:</strong> Cupertino, California</span>
+          <span>&bull;</span>
+          <a href="https://www.apple.com" target="_blank" class="text-blue-600 hover:underline">apple.com &UpperRightArrow;</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ================= TAB 2: BULLS / BEARS ================= -->
+    <div id="tab-bulls-bears" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <h2 class="text-base font-bold text-slate-900 mb-1">Apple Inc. (AAPL) Investment Thesis: Bulls vs Bears</h2>
+        <p class="text-xs text-slate-500 mb-6">Ringkasan komprehensif argumen utama investor institusi untuk posisi beli (bulls) dan risiko potensi jual (bears).</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Bull Case -->
+          <div class="bg-emerald-50/50 border border-emerald-200 rounded-xl p-5 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-emerald-600 text-white font-extrabold flex items-center justify-center text-sm">🐂</span>
+              <div>
+                <h3 class="text-sm font-bold text-emerald-950">The Bullish Thesis (Potensi Naik)</h3>
+                <span class="text-[11px] text-emerald-700">Driver pertumbuhan masa depan</span>
+              </div>
+            </div>
+            <ul class="space-y-3 text-xs text-slate-700">
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">✔</span>
+                <span><strong>Ekosistem Apple Intelligence (AI):</strong> Siklus upgrade iPhone besar-besaran yang didorong fitur AI generatif on-device terbaru.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">✔</span>
+                <span><strong>Pendapatan Services Berulang (High Margin):</strong> Pendapatan dari App Store, Cloud, dan Pay tumbuh konsisten dengan margin kotor di atas 70%.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-emerald-600 font-bold">✔</span>
+                <span><strong>Share Buyback Masif:</strong> Kapasitas Free Cash Flow lebih dari $100 Miliar per tahun memungkinkan program pembelian kembali saham untuk mendongkrak EPS.</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Bear Case -->
+          <div class="bg-rose-50/50 border border-rose-200 rounded-xl p-5 space-y-4">
+            <div class="flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-rose-600 text-white font-extrabold flex items-center justify-center text-sm">🐻</span>
+              <div>
+                <h3 class="text-sm font-bold text-rose-950">The Bearish Thesis (Faktor Risiko)</h3>
+                <span class="text-[11px] text-rose-700">Tantangan valuasi & regulasi</span>
+              </div>
+            </div>
+            <ul class="space-y-3 text-xs text-slate-700">
+              <li class="flex items-start gap-2">
+                <span class="text-rose-600 font-bold">✖</span>
+                <span><strong>Valuasi P/E Historis Tinggi:</strong> P/E berada di kisaran 35x, jauh di atas rata-rata 10 tahunnya (~24x) di tengah pertumbuhan pendapatan satu digit.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-600 font-bold">✖</span>
+                <span><strong>Tekanan Regulasi Global (Antitrust):</strong> Investigasi Departemen Kehakiman AS (DOJ) dan regulasi DMA Uni Eropa dapat menekan komisi 30% App Store.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-600 font-bold">✖</span>
+                <span><strong>Persaingan Ketat di China:</strong> Persaingan ketat dari brand lokal seperti Huawei menekan pangsa pasar iPhone di wilayah Greater China.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 3: CHARTS ================= -->
+    <div id="tab-charts" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-2">Technical & Moving Averages (AAPL)</h3>
+        <p class="text-xs text-slate-500 mb-4">Grafik dengan indikator Simple Moving Average 50-hari dan 200-hari.</p>
+        <div class="h-96 w-full">
+          <canvas id="technicalChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 4: PERFORMANCE ================= -->
+    <div id="tab-performance" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Total Return: AAPL vs S&P 500 (SPY) vs Nasdaq (QQQ)</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase">
+                <th class="py-3 px-4 font-semibold">Periode</th>
+                <th class="py-3 px-4 font-semibold text-right">AAPL Return</th>
+                <th class="py-3 px-4 font-semibold text-right">S&P 500 (SPY)</th>
+                <th class="py-3 px-4 font-semibold text-right">Nasdaq (QQQ)</th>
+                <th class="py-3 px-4 font-semibold text-center">Outperformance</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 font-mono-num">
+              <tr>
+                <td class="py-3 px-4 font-sans font-medium">1 Bulan</td>
+                <td class="py-3 px-4 text-right text-emerald-600 font-bold">+4.12%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+1.85%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+2.40%</td>
+                <td class="py-3 px-4 text-center text-emerald-600 font-bold">+2.27%</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-sans font-medium">Year-to-Date (YTD)</td>
+                <td class="py-3 px-4 text-right text-emerald-600 font-bold">+22.45%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+14.20%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+18.10%</td>
+                <td class="py-3 px-4 text-center text-emerald-600 font-bold">+8.25%</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-sans font-medium">1 Tahun</td>
+                <td class="py-3 px-4 text-right text-emerald-600 font-bold">+34.80%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+25.60%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+31.20%</td>
+                <td class="py-3 px-4 text-center text-emerald-600 font-bold">+9.20%</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-4 font-sans font-medium">5 Tahun (CAGR)</td>
+                <td class="py-3 px-4 text-right text-emerald-600 font-bold">+265.40%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+94.10%</td>
+                <td class="py-3 px-4 text-right text-emerald-600">+132.50%</td>
+                <td class="py-3 px-4 text-center text-emerald-600 font-bold">+171.30%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 5: NEWS ================= -->
+    <div id="tab-news" class="tab-content hidden space-y-4">
+      <div class="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 shadow-xs">
+        <div class="p-4 hover:bg-slate-50 transition">
+          <span class="text-[10px] text-blue-600 font-bold uppercase">Bloomberg &bull; 2 hours ago</span>
+          <h4 class="text-sm font-bold text-slate-900 mt-1 hover:text-blue-600 cursor-pointer">Apple Accelerates Custom Silicon for AI Data Centers in Cloud Push</h4>
+          <p class="text-xs text-slate-500 mt-1">Tech giant plans to deploy proprietary server chips to power incoming generative AI capabilities across iPhone and Mac lineup.</p>
+        </div>
+        <div class="p-4 hover:bg-slate-50 transition">
+          <span class="text-[10px] text-blue-600 font-bold uppercase">Reuters &bull; 6 hours ago</span>
+          <h4 class="text-sm font-bold text-slate-900 mt-1 hover:text-blue-600 cursor-pointer">Wall Street Raises Apple Target to $260 as Services Division Hits Record Margin</h4>
+          <p class="text-xs text-slate-500 mt-1">Morgan Stanley reiterates Overweight rating citing resiliency in recurring high-margin subscription cash flow.</p>
+        </div>
+        <div class="p-4 hover:bg-slate-50 transition">
+          <span class="text-[10px] text-blue-600 font-bold uppercase">CNBC &bull; 1 day ago</span>
+          <h4 class="text-sm font-bold text-slate-900 mt-1 hover:text-blue-600 cursor-pointer">Warren Buffett's Berkshire Hathaway Maintains Core Stake in Apple</h4>
+          <p class="text-xs text-slate-500 mt-1">Berkshire comments underline Apple as a consumer indispensable brand with unmatched customer retention.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 6: DIVIDENDS ================= -->
+    <div id="tab-dividends" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs">
+          <p class="text-slate-500">Dividend Yield (TTM)</p>
+          <p class="text-xl font-bold text-slate-900 mt-1 font-mono-num">0.42%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs">
+          <p class="text-slate-500">Annual Payout</p>
+          <p class="text-xl font-bold text-slate-900 mt-1 font-mono-num">$1.00 / share</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs">
+          <p class="text-slate-500">Payout Ratio</p>
+          <p class="text-xl font-bold text-slate-900 mt-1 font-mono-num">16.45%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs">
+          <p class="text-slate-500">Growth Streak</p>
+          <p class="text-xl font-bold text-emerald-600 mt-1 font-mono-num">12 Consecutive Years</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 7: FINANCIALS ================= -->
+    <div id="tab-financials" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-4">Annual Income Statement Breakdown (Billions USD)</h3>
+        <div class="h-72 w-full">
+          <canvas id="financialsBarChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 8: METRICS ================= -->
+    <div id="tab-metrics" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-3">Profitability & Efficiency Metrics</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono-num">
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-slate-500 font-sans">Operating Margin:</span>
+            <p class="text-lg font-bold text-slate-900 mt-1">31.42%</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-slate-500 font-sans">Return on Invested Capital (ROIC):</span>
+            <p class="text-lg font-bold text-emerald-600 mt-1">56.12%</p>
+          </div>
+          <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+            <span class="text-slate-500 font-sans">Price-to-Free-Cash-Flow:</span>
+            <p class="text-lg font-bold text-slate-900 mt-1">33.24</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB 9: DCF CALCULATOR ================= -->
+    <div id="tab-dcf" class="tab-content hidden space-y-6">
+      <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-xs">
+        <div class="max-w-2xl">
+          <h2 class="text-base font-bold text-slate-900">Discounted Cash Flow (DCF) Valuation Model</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Simulasi estimasi nilai intrinsik saham AAPL berdasarkan proyeksi Free Cash Flow 5 tahun ke depan.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6 items-center">
+          <div class="space-y-4 md:col-span-2">
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-slate-600">Proyeksi Pertumbuhan FCF (Growth Rate):</span>
+                <span id="dcfGrowthVal" class="text-blue-600 font-bold font-mono-num">8.0%</span>
+              </div>
+              <input type="range" id="dcfGrowth" min="2" max="20" step="0.5" value="8" oninput="calculateDCF()" class="w-full accent-blue-600 cursor-pointer">
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs font-semibold mb-1">
+                <span class="text-slate-600">Tingkat Diskonto (Discount Rate / WACC):</span>
+                <span id="dcfDiscountVal" class="text-blue-600 font-bold font-mono-num">9.0%</span>
+              </div>
+              <input type="range" id="dcfDiscount" min="6" max="15" step="0.5" value="9" oninput="calculateDCF()" class="w-full accent-blue-600 cursor-pointer">
+            </div>
+          </div>
+
+          <!-- DCF Result Card -->
+          <div class="bg-blue-50 border border-blue-200 rounded-xl p-5 text-center">
+            <p class="text-xs text-slate-500 font-semibold uppercase">Estimated Intrinsic Value</p>
+            <div id="dcfFairValue" class="text-3xl font-black text-blue-700 mt-1 font-mono-num">$228.50</div>
+            <p id="dcfMarginLabel" class="text-xs font-bold text-amber-700 mt-1">Fair Valued (-3.7% vs Price)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-xs text-slate-400 border-t border-slate-200 mt-12">
+    Stock Analysis Pro Dashboard &bull; Data simulated for AAPL research demo purposes
+  </footer>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Tab Switching Functionality
+    function switchTab(tabId) {
+      // Hide all contents
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      // Remove active states from all buttons
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600', 'bg-blue-50/50');
+        btn.classList.add('border-transparent', 'text-slate-600');
+      });
+
+      // Show selected tab content
+      const targetContent = document.getElementById('tab-' + tabId);
+      if (targetContent) targetContent.classList.remove('hidden');
+
+      // Highlight selected button
+      const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+      if (targetBtn) {
+        targetBtn.classList.remove('border-transparent', 'text-slate-600');
+        targetBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600', 'bg-blue-50/50');
+      }
+
+      // Render chart if opening charts or financials tab
+      if (tabId === 'charts') renderTechnicalChart();
+      if (tabId === 'financials') renderFinancialsChart();
+    }
+
+    // Toggle Following Button
+    function toggleFollow() {
+      const btn = document.getElementById('followBtn');
+      if (btn.innerText === "Following") {
+        btn.innerText = "+ Follow";
+        btn.className = "inline-flex items-center gap-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-4 py-1.5 rounded-full text-xs shadow-sm transition";
+      } else {
+        btn.innerText = "Following";
+        btn.className = "inline-flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-1.5 rounded-full text-xs shadow-sm transition";
+      }
+    }
+
+    // Highlight metrics from "Popular:" links
+    function highlightMetric(id) {
+      switchTab('overview');
+      const target = document.getElementById('metric-' + id);
+      if (target) {
+        target.classList.add('bg-blue-100', 'p-1');
+        setTimeout(() => {
+          target.classList.remove('bg-blue-100', 'p-1');
+        }, 1500);
+      }
+    }
+
+    // Stock Chart Initializer (Overview)
+    let stockChart = null;
+    const chartDataPresets = {
+      '1D': { labels: ['9:30', '10:30', '11:30', '12:30', '13:30', '14:30', '16:00'], prices: [233.5, 234.2, 235.1, 234.8, 236.2, 236.9, 237.40] },
+      '5D': { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], prices: [231.0, 233.2, 232.5, 235.8, 237.40] },
+      '1M': { labels: ['W1', 'W2', 'W3', 'W4'], prices: [224.0, 227.5, 231.2, 237.40] },
+      '6M': { labels: ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'], prices: [195.0, 210.0, 216.5, 224.2, 231.0, 237.40] },
+      'YTD': { labels: ['Jan', 'Mar', 'May', 'Jul', 'Sep', 'Nov'], prices: [185.0, 172.0, 190.0, 218.0, 227.0, 237.40] },
+      '1Y': { labels: ['Dec', 'Feb', 'Apr', 'Jun', 'Aug', 'Oct', 'Nov'], prices: [189.0, 182.0, 169.0, 207.0, 224.0, 232.0, 237.40] },
+      'ALL': { labels: ['2020', '2021', '2022', '2023', '2024', '2025'], prices: [72.0, 132.0, 150.0, 192.0, 237.40, 245.0] }
+    };
+
+    function initStockChart(preset = '1Y') {
+      const ctx = document.getElementById('stockPriceChart').getContext('2d');
+      const data = chartDataPresets[preset];
+
+      if (stockChart) stockChart.destroy();
+
+      stockChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Stock Price (USD)',
+            data: data.prices,
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
+            fill: true,
+            borderWidth: 2.2,
+            tension: 0.25,
+            pointRadius: 3,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` Price: $${ctx.raw.toFixed(2)}`
+              }
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: {
+              ticks: { callback: v => '$' + v, font: { size: 10 } },
+              grid: { color: '#f1f5f9' }
+            }
+          }
+        }
+      });
+    }
+
+    function changeInterval(intv) {
+      document.querySelectorAll('.interval-btn').forEach(b => {
+        b.classList.remove('active-interval', 'bg-white', 'text-blue-600', 'shadow-xs', 'font-bold');
+        b.classList.add('text-slate-600');
+      });
+      event.target.classList.add('active-interval', 'bg-white', 'text-blue-600', 'shadow-xs', 'font-bold');
+      event.target.classList.remove('text-slate-600');
+      initStockChart(intv);
+    }
+
+    // Technical Chart
+    let techChart = null;
+    function renderTechnicalChart() {
+      if (techChart) return;
+      const ctx = document.getElementById('technicalChart').getContext('2d');
+      techChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'],
+          datasets: [
+            { label: 'AAPL Price', data: [185, 181, 170, 169, 191, 210, 218, 221, 227, 232, 237.4], borderColor: '#0f172a', borderWidth: 2 },
+            { label: '50-Day SMA', data: [180, 178, 175, 174, 182, 195, 208, 215, 222, 228, 234], borderColor: '#10b981', borderDash: [4, 4], borderWidth: 1.5 },
+            { label: '200-Day SMA', data: [175, 176, 177, 178, 180, 184, 189, 195, 201, 207, 212], borderColor: '#f59e0b', borderDash: [6, 6], borderWidth: 1.5 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'top' } }
+        }
+      });
+    }
+
+    // Financials Bar Chart
+    let finChart = null;
+    function renderFinancialsChart() {
+      if (finChart) return;
+      const ctx = document.getElementById('financialsBarChart').getContext('2d');
+      finChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['2021', '2022', '2023', '2024', '2025 (Est)'],
+          datasets: [
+            { label: 'Revenue', data: [365.8, 394.3, 383.3, 391.0, 412.5], backgroundColor: '#3b82f6' },
+            { label: 'Net Income', data: [94.6, 99.8, 96.9, 93.7, 102.4], backgroundColor: '#10b981' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false
+        }
+      });
+    }
+
+    // DCF Calculator Formula
+    function calculateDCF() {
+      const g = parseFloat(document.getElementById('dcfGrowth').value);
+      const d = parseFloat(document.getElementById('dcfDiscount').value);
+
+      document.getElementById('dcfGrowthVal').innerText = g.toFixed(1) + '%';
+      document.getElementById('dcfDiscountVal').innerText = d.toFixed(1) + '%';
+
+      // Simple DCF model estimation
+      const baseFCF = 108.8; // Billion
+      const shares = 15.2; // Billion
+      let totalPV = 0;
+      let curFCF = baseFCF;
+
+      for (let i = 1; i <= 5; i++) {
+        curFCF *= (1 + (g / 100));
+        totalPV += curFCF / Math.pow(1 + (d / 100), i);
+      }
+
+      // Terminal Value (perpetual growth 2.5%)
+      const terminalVal = (curFCF * 1.025) / ((d / 100) - 0.025);
+      const pvTerminal = terminalVal / Math.pow(1 + (d / 100), 5);
+
+      const enterpriseVal = totalPV + pvTerminal;
+      const fairValuePerShare = (enterpriseVal / shares);
+
+      document.getElementById('dcfFairValue').innerText = '$' + fairValuePerShare.toFixed(2);
+
+      const curPrice = 237.40;
+      const margin = ((fairValuePerShare - curPrice) / curPrice) * 100;
+      const label = document.getElementById('dcfMarginLabel');
+
+      if (margin > 0) {
+        label.innerText = `Undervalued (+${margin.toFixed(1)}% Upside)`;
+        label.className = "text-xs font-bold text-emerald-700 mt-1";
+      } else {
+        label.innerText = `Overvalued (${margin.toFixed(1)}% Downside)`;
+        label.className = "text-xs font-bold text-rose-700 mt-1";
+      }
+    }
+
+    // Initialize on Load
+    document.addEventListener('DOMContentLoaded', () => {
+      initStockChart('1Y');
+    });
+  </script>
+</body>
+</html>
